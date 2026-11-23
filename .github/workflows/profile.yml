@@ -1,0 +1,22 @@
+name: profile
+on:
+  schedule: [{ cron: '17 */6 * * *' }]
+  workflow_dispatch:
+  push: { branches: [main] }
+permissions: { contents: write }
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      # PROFILE_TOKEN (optional, read-only PAT) adds private repos to the language mix and repo count.
+      - run: node gen/build.mjs out
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROFILE_TOKEN: ${{ secrets.PROFILE_TOKEN }}
+      - uses: crazy-max/ghaction-github-pages@v4
+        with: { target_branch: output, build_dir: out, keep_history: false }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
