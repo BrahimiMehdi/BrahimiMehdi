@@ -4,7 +4,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 
 const LOGIN = process.env.PROFILE_LOGIN || 'BrahimiMehdi';
 const QUERY = `query($login:String!){ user(login:$login){ name login createdAt
-  contributionsCollection{ contributionCalendar{ totalContributions weeks{ contributionDays{ date contributionCount }}}}
+  contributionsCollection{ restrictedContributionsCount contributionCalendar{ totalContributions weeks{ contributionDays{ date contributionCount }}}}
   repositories(ownerAffiliations:OWNER, first:100, orderBy:{field:PUSHED_AT,direction:DESC}){ totalCount
     nodes{ name isPrivate isFork pushedAt defaultBranchRef{ target{ oid }}
       languages(first:8, orderBy:{field:SIZE,direction:DESC}){ edges{ size node{ name color }}}}}}}`;
@@ -67,7 +67,13 @@ export async function loadData({ snapshot } = {}) {
     year, days, last28, weeks: weeks.slice(-26), months: [...months.entries()].slice(-12),
     avg28: Math.round(sum(last28) / 28), sum28: sum(last28), active28: last28.filter(d => d.n > 0).length,
     streak, languages,
-    repos: { owned: u.repositories.totalCount, public: u.repositories.nodes.filter(r => !r.isPrivate).length },
+    // Private repos are only visible with PROFILE_TOKEN; otherwise fall back to the PRIVATE_REPOS variable.
+    repos: (() => {
+      const pub = u.repositories.nodes.filter(r => !r.isPrivate).length;
+      const priv = u.repositories.nodes.filter(r => r.isPrivate).length || Number(process.env.PRIVATE_REPOS || 0);
+      return { owned: pub + priv, public: pub, private: priv };
+    })(),
+    privateContrib: u.contributionsCollection.restrictedContributionsCount,
     lot: (latest?.defaultBranchRef?.target?.oid || '0000000').slice(0, 7).toUpperCase(),
     pushed: new Date(latest?.pushedAt || now),
   };

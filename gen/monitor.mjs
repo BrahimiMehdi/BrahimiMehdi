@@ -135,8 +135,8 @@ ${syncKeys('amp', weeks.length, pl.bw, W, 0.2, 'transform:scaleY(1)', 'transform
     ${t(346, 344, 'barlowc-bold', 96, PLETH, ts.pct.toFixed(0), ' text-anchor="end"')}
     <line x1="0" y1="358" x2="360" y2="358" stroke="${RULE}" stroke-width="2"/>
 
-    ${t(18, 388, 'barlowc-semibold', 24, NIBP, 'NIBP')}${t(18, 410, 'barlowc-medium', 16, DIM, 'repositories, owned / public')}
-    ${t(346, 474, 'barlowc-bold', 72, NIBP, `${d.repos.owned}/${d.repos.public}`, ' text-anchor="end"')}
+    ${t(18, 388, 'barlowc-semibold', 24, NIBP, 'NIBP')}${t(18, 410, 'barlowc-medium', 16, DIM, 'repositories, private / public')}
+    ${t(346, 474, 'barlowc-bold', 72, NIBP, `${d.repos.private}/${d.repos.public}`, ' text-anchor="end"')}
     <line x1="0" y1="490" x2="360" y2="490" stroke="${RULE}" stroke-width="2"/>
     <line x1="170" y1="490" x2="170" y2="600" stroke="${RULE}" stroke-width="2"/>
 
@@ -169,28 +169,37 @@ export function events(d) {
     ['2024', 'it-blog', 'it-blog-two.vercel.app', 'TYPESCRIPT', '#5A9BE6'],
     ['2024', 'tech-for-hope', 'github.com/BrahimiMehdi/tech-for-hope', 'TYPESCRIPT', '#5A9BE6'],
   ];
+  const redacted = { private: true, yr: '2025\u201326', sub: [d.repos.private ? `${d.repos.private} private repositories` : 'private repositories', d.privateContrib ? `${fmt(d.privateContrib)} private contributions in 12 months` : '', 'names withheld'].filter(Boolean).join(' \u00B7 ') };
+  const all = [...rows, redacted];
   const orders = [
     ['TypeScript', 'continuous'],
     ['Next.js · React', 'daily'],
-    ['Payload CMS', 'daily'],
+    ['Node.js', 'daily'],
     ['PostgreSQL · SQLite', 'as needed'],
     ['Tailwind CSS', 'daily'],
-    ['Docker · Coolify', 'every deploy'],
+    ['Docker', 'every deploy'],
     ['Three.js · GLSL', 'evenings'],
     ['Electron', 'as needed'],
   ];
   const RH = 56, Y0 = 108;
-  const H = Y0 + rows.length * RH + RH + 44;
+  const H = Y0 + (rows.length + 1) * RH + RH + 44;
   const now = clock(d.now);
-  let tbl = rows.map(([yr, ev, sub, tag, col], i) => {
+  let tbl = all.map((row, i) => {
     const y = Y0 + i * RH;
+    if (row.private) {
+      const bars = [150, 96, 124].map((w, k, a) => `<rect x="${84 + a.slice(0, k).reduce((s, v) => s + v + 10, 0)}" y="${y + 9}" width="${w}" height="20" rx="2" fill="#2A3542"/>`).join('');
+      return `${i % 2 ? `<rect x="0" y="${y}" width="740" height="${RH}" fill="#081017"/>` : ''}
+      ${t(18, y + 34, 'barlowc-semibold', 20, DIM, row.yr)}${bars}${t(84, y + 45, 'barlowc-medium', 16, DIM, row.sub)}
+      <rect x="${722 - 86}" y="${y + 18}" width="86" height="22" rx="3" fill="#2A3542"/>${t(722 - 43, y + 34, 'barlowc-bold', 14, TXT, 'PRIVATE', ' text-anchor="middle" letter-spacing="1"')}`;
+    }
+    const [yr, ev, sub, tag, col] = row;
     const tw = measure('barlowc-bold', 14, tag) + 18;
     return `${i % 2 ? `<rect x="0" y="${y}" width="740" height="${RH}" fill="#081017"/>` : ''}
       ${t(18, y + 34, 'barlowc-semibold', 20, DIM, yr)}
       ${t(84, y + 25, 'barlowc-semibold', 20, TXT, ev)}${t(84, y + 45, 'barlowc-medium', 16, DIM, sub)}
       <rect x="${722 - tw}" y="${y + 18}" width="${tw}" height="22" rx="3" fill="none" stroke="${col}" stroke-width="1.4"/>${t(722 - tw / 2, y + 34, 'barlowc-bold', 14, col, tag, ' text-anchor="middle" letter-spacing="1"')}`;
   }).join('');
-  const yNow = Y0 + rows.length * RH;
+  const yNow = Y0 + all.length * RH;
   tbl += `<rect x="0" y="${yNow}" width="740" height="${RH}" fill="#0B1E14"/><rect x="0" y="${yNow}" width="740" height="${RH}" fill="none" stroke="${ECG}" stroke-width="1.5"/>
     ${t(18, yNow + 34, 'barlowc-bold', 20, ECG, 'NOW')}
     ${t(84, yNow + 25, 'barlowc-semibold', 20, TXT, `Last push, batch ${d.lot}`)}${t(84, yNow + 45, 'barlowc-medium', 16, DIM, `${d.streak}-day streak · ${fmt(d.sum28)} contributions in 28 days`)}
@@ -204,7 +213,7 @@ export function events(d) {
   }).join('');
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 ${H + 48}" width="100%" role="img" aria-labelledby="tt">
-<title id="tt">Event review. ${rows.map(r => r[0] + ': ' + r[1] + ' (' + r[2] + ')').join('. ')}. Active orders: ${orders.map(o => o[0] + ' ' + o[1]).join(', ')}.</title>
+<title id="tt">Event review. ${rows.map(r => r[0] + ': ' + r[1] + ' (' + r[2] + ')').join('. ')}. ${redacted.yr}: ${redacted.sub}. Active orders: ${orders.map(o => o[0] + ' ' + o[1]).join(', ')}.</title>
 <style>${fontFaces(['barlowc-medium', 'barlowc-semibold', 'barlowc-bold'])}
 .live{animation:live 2s ease-in-out infinite}@keyframes live{50%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.live{animation:none}}</style>

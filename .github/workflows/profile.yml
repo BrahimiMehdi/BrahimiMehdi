@@ -16,6 +16,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PROFILE_TOKEN: ${{ secrets.PROFILE_TOKEN }}
+          PRIVATE_REPOS: ${{ vars.PRIVATE_REPOS }}
       - uses: crazy-max/ghaction-github-pages@v4
         with: { target_branch: output, build_dir: out, keep_history: false }
         env:
